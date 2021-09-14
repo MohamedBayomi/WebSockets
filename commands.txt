@@ -12,3 +12,10 @@ dotnet run
 MKDIR "D:\Projects\WebSockets\WebSocketClient"
 CD "D:\Projects\WebSockets\WebSocketClient"
 echo "" > WebSocketClient.html
+... write some code ...
+
+CD "D:\Projects\WebSockets"
+git remote add origin https://github.com/MohamedBayomi/WebSockets.git
+git branch -M main
+git push -u origin main
+
