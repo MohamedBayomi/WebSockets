@@ -1,0 +1,14 @@
+D:
+
+MKDIR "D:\Projects\WebSockets"
+CD "D:\Projects\WebSockets"
+dotnet new web -n WebSocketServer
+code -r .\WebSocketServer\
+... write some code ...
+dotnet build
+dotnet run
+
+
+MKDIR "D:\Projects\WebSockets\WebSocketClient"
+CD "D:\Projects\WebSockets\WebSocketClient"
+echo "" > WebSocketClient.html
