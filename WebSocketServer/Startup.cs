@@ -15,9 +15,10 @@ namespace WebSocketServer
     {
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddWebSocketManager();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, Microsoft.Extensions.Hosting.IHostApplicationLifetime hostApplicationLifetime)
         {
             app.UseWebSockets();
             // instead of calling app.Use(AcceptWebSocketAsync); we are going to call the following extension method.
@@ -25,6 +26,12 @@ namespace WebSocketServer
             app.UseWebSocketServer();
 
             app.Run(HandleRequestDelegate);
+            hostApplicationLifetime.ApplicationStopping.Register(OnAppStopping);
+        }
+
+        private void OnAppStopping()
+        {
+            
         }
 
         private async Task HandleRequestDelegate(HttpContext context)

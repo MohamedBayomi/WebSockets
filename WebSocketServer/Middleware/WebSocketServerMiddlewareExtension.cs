@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebSockerServer.Middleware
 {
@@ -15,6 +16,12 @@ namespace WebSockerServer.Middleware
             // UseMiddleware = Use (method) while method should be in your class "WebSocketServerMiddleware"
             // and should public 'Invoke' or 'InvokeAsync' 
             return builder.UseMiddleware<WebSocketServerMiddleware>();
+        }
+
+        public static IServiceCollection AddWebSocketManager(this IServiceCollection services)
+        {
+            services.AddSingleton<WebSocketServerConnectionManager>();
+            return services;
         }
     }
 }

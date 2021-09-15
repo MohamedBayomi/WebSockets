@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System;
 using System.Net.WebSockets;
 using System.Text;
@@ -10,37 +11,28 @@ namespace WebSockerServer.Middleware
     public class WebSocketServerMiddleware
     {
         private readonly RequestDelegate _next;
-        public WebSocketServerMiddleware(RequestDelegate next)
+        private readonly WebSocketServerConnectionManager _manager;
+        public WebSocketServerMiddleware(RequestDelegate next, WebSocketServerConnectionManager manager)
         {
             _next = next;
+            _manager = manager;
         }
-        
+
         public async Task InvokeAsync(HttpContext context)
         {
-            WriteRequestParam(context);
+            //WriteRequestParam(context);
             if (context.WebSockets.IsWebSocketRequest)
             {
                 WebSocket socket = await context.WebSockets.AcceptWebSocketAsync();
                 System.Console.WriteLine("--> Web Socket Connected...");
+                await _manager.AddSocket(socket);
 
-                await ReceiveMessage(socket, PrintMessage);
+                await ReceiveMessage(socket);
             }
             else
             {
                 System.Console.WriteLine("--> Hello from second request delegate");
                 await _next(context);
-            }
-        }
-        
-        private void PrintMessage(WebSocketReceiveResult result, byte[] buffer)
-        {
-            if (result.MessageType == WebSocketMessageType.Text)
-            {
-                System.Console.WriteLine($"--> Message Received: {Encoding.UTF8.GetString(buffer, 0, result.Count)}");
-            }
-            else if (result.MessageType == WebSocketMessageType.Close)
-            {
-                System.Console.WriteLine("--> Close Message Received");
             }
         }
 
@@ -58,14 +50,26 @@ namespace WebSockerServer.Middleware
             }
         }
 
-        private async Task ReceiveMessage(WebSocket socket, Action<WebSocketReceiveResult, byte[]> handleMessage)
+        private async Task ReceiveMessage(WebSocket socket)
         {
-            var buffer = new byte[1024*4];
+            var buffer = new byte[1024 * 4];
 
             while (socket.State == WebSocketState.Open)
             {
                 var result = await socket.ReceiveAsync(buffer: new ArraySegment<byte>(buffer), cancellationToken: CancellationToken.None);
-                handleMessage(result, buffer);
+
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    System.Console.WriteLine($"--> Message Received: {message}");
+                    await _manager.RouteMessage(message);
+                }
+                else if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    System.Console.WriteLine("--> Close Message Received");
+                    await socket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                    _manager.RemoveSocket(socket);
+                }
             }
         }
 
